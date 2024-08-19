@@ -69,10 +69,8 @@ function unemployment_rate(shapefile_path::String, api_key::String)
 
     df = DataFrame(all_rows)
 	df.GEOID = [row.seriesID[6:10] for row in eachrow(df)]
-    finaldf = leftjoin(counties, df; on=:GEOID)
-    filename = tempname() * ".geojson"
-    GDF.write(filename, finaldf)
-    return (df=finaldf, geojson=JSON.parsefile(filename))
+
+    return leftjoin(counties, df; on=:GEOID)
 end
 
 end

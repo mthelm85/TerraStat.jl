@@ -12,6 +12,6 @@ end
 @testset "unemployment_rate function" begin
     api_key = "78a884d3dd654550952b45740abcad30"
     result = TerraStat.unemployment_rate(test_geojson_path, api_key)
-    @test size(result.df, 1) == 4
-    @test size(result.df, 2) == 17
+    @test size(result, 1) == 4
+    @test size(result, 2) == 17
 end
