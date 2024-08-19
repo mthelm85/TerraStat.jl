@@ -14,7 +14,7 @@ function intersecting_counties(shapefile_path::String)
     return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), counties)
 end
 
-function get_unemployment_rate(shapefile_path::String, api_key::String)
+function unemployment_rate(shapefile_path::String, api_key::String)
     counties = intersecting_counties(shapefile_path)
     series_ids = ["LAUCN$(row.GEOID)0000000003" for row in eachrow(counties)]
     url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
@@ -69,8 +69,10 @@ function get_unemployment_rate(shapefile_path::String, api_key::String)
 
     df = DataFrame(all_rows)
 	df.GEOID = [row.seriesID[6:10] for row in eachrow(df)]
-
-    return leftjoin(counties, df; on=:GEOID)
+    finaldf = leftjoin(counties, df; on=:GEOID)
+    filename = tempname() * ".geojson"
+    GDF.write(filename, finaldf)
+    return (df=finaldf, geojson=JSON.parsefile(filename))
 end
 
 end

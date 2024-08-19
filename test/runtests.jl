@@ -9,9 +9,9 @@ test_geojson_path = TerraStat.project_path("data/research_triangle.geojson")
     @test size(result, 2) == 10
 end
 
-@testset "get_unemployment_rate function" begin
+@testset "unemployment_rate function" begin
     api_key = "78a884d3dd654550952b45740abcad30"
-    result = TerraStat.get_unemployment_rate(test_geojson_path, api_key)
-    @test size(result, 1) == 4
-    @test size(result, 2) == 17
+    result = TerraStat.unemployment_rate(test_geojson_path, api_key)
+    @test size(result.df, 1) == 4
+    @test size(result.df, 2) == 17
 end
