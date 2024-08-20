@@ -8,26 +8,27 @@ using JSON
 
 project_path(parts...) = normpath(joinpath(@__DIR__, "..", parts...))
 
-function intersection_check(s1, s2, threshold)
-    if AG.intersects(s1, s2) == false
-        return false
-    end
-
-    intersection = AG.intersection(s1, s2)
-    intersection_area = AG.geomarea(intersection)
-    s2_area = AG.geomarea(s2)
-
-    return intersection_area / s2_area > threshold ? true : false
-end
-
-function intersecting_counties(shapefile_path::String, threshold=0.01)
+function contained_counties(shapefile_path::String)
     counties = GDF.read(project_path("data/cb_2018_us_county_5m.shp"))
     user_shape = GDF.read(shapefile_path)
-    return filter(row -> any([intersection_check(user_shape.geometry[i], row.geometry, threshold) for i in 1:size(user_shape,1)]), counties)
+    return filter(row -> any([AG.contains(AG.buffer(user_shape.geometry[i], 0.09), row.geometry) for i in 1:size(user_shape,1)]), counties)
 end
 
-function unemployment_rate(shapefile_path::String, api_key::String)
-    counties = intersecting_counties(shapefile_path)
+function intersecting_counties(shapefile_path::String)
+    counties = GDF.read(project_path("data/cb_2018_us_county_5m.shp"))
+    user_shape = GDF.read(shapefile_path)
+    return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), counties)
+end
+
+function unemployment_rate(shapefile_path::String, api_key::String; pred::Symbol=:intersects)
+    if pred == :intersects
+        counties = intersecting_counties(shapefile_path)
+    elseif pred == :contains
+        counties = contained_counties(shapefile_path)
+    else
+        error("Invalid predicate: $pred")
+    end
+    # counties = intersecting_counties(shapefile_path)
     series_ids = ["LAUCN$(row.GEOID)0000000003" for row in eachrow(counties)]
     url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
     headers = Dict("Content-Type" => "application/json")
