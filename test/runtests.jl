@@ -9,9 +9,18 @@ test_geojson_path = TerraStat.project_path("data/research_triangle.geojson")
     @test size(result, 2) == 10
 end
 
-@testset "unemployment_rate function" begin
+@testset "contained_counties function" begin
+    result = TerraStat.contained_counties(test_geojson_path)
+    @test size(result, 1) == 0
+    @test size(result, 2) == 10
+end
+
+@testset "laus function" begin
     api_key = "78a884d3dd654550952b45740abcad30"
-    result = TerraStat.unemployment_rate(test_geojson_path, api_key)
+    result = TerraStat.laus(test_geojson_path, api_key)
     @test size(result, 1) == 4
     @test size(result, 2) == 17
+    result_contains = TerraStat.laus(test_geojson_path, api_key, pred=:contains)
+    @test size(result_contains, 1) == 0
+    @test size(result_contains, 2) == 10
 end

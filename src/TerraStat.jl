@@ -21,7 +21,7 @@ function intersecting_counties(shapefile_path::String)
     return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), counties)
 end
 
-function unemployment_rate(shapefile_path::String, api_key::String; pred::Symbol=:intersects)
+function laus(shapefile_path::String, api_key::String; measure::Symbol=:unemployment_rate, pred::Symbol=:intersects)
     if pred == :intersects
         counties = intersecting_counties(shapefile_path)
     elseif pred == :contains
@@ -29,7 +29,19 @@ function unemployment_rate(shapefile_path::String, api_key::String; pred::Symbol
     else
         error("Invalid predicate: $pred")
     end
-    series_ids = ["LAUCN$(row.GEOID)0000000003" for row in eachrow(counties)]
+
+    if measure == :unemployment_rate
+        series_ids = ["LAUCN$(row.GEOID)0000000003" for row in eachrow(counties)]
+    elseif measure == :unemployment
+        series_ids = ["LAUCN$(row.GEOID)0000000004" for row in eachrow(counties)]
+    elseif measure == :employment
+        series_ids = ["LAUCN$(row.GEOID)0000000005" for row in eachrow(counties)]
+    elseif measure == :labor_force
+        series_ids = ["LAUCN$(row.GEOID)0000000006" for row in eachrow(counties)]
+    else
+        error("Invalid measure: $measure")
+    end
+
     url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
     headers = Dict("Content-Type" => "application/json")
     all_rows = []
