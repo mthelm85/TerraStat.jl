@@ -9,7 +9,7 @@ using JSON
 project_path(parts...) = normpath(joinpath(@__DIR__, "..", parts...))
 
 function contained_counties(shapefile_path::String)
-    counties = GDF.read(project_path("data/cb_2018_us_county_5m.shp"))
+    counties = intersecting_counties(shapefile_path)
     user_shape = GDF.read(shapefile_path)
     return filter(row -> any([AG.contains(AG.buffer(user_shape.geometry[i], 0.09), row.geometry) for i in 1:size(user_shape,1)]), counties)
 end
@@ -28,7 +28,6 @@ function unemployment_rate(shapefile_path::String, api_key::String; pred::Symbol
     else
         error("Invalid predicate: $pred")
     end
-    # counties = intersecting_counties(shapefile_path)
     series_ids = ["LAUCN$(row.GEOID)0000000003" for row in eachrow(counties)]
     url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
     headers = Dict("Content-Type" => "application/json")
