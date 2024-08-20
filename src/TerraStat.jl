@@ -11,7 +11,8 @@ project_path(parts...) = normpath(joinpath(@__DIR__, "..", parts...))
 function contained_counties(shapefile_path::String)
     counties = intersecting_counties(shapefile_path)
     user_shape = GDF.read(shapefile_path)
-    return filter(row -> any([AG.contains(AG.buffer(user_shape.geometry[i], 0.09), row.geometry) for i in 1:size(user_shape,1)]), counties)
+    buffered_geoms = [AG.buffer(user_shape.geometry[i], 0.09) for i in 1:size(user_shape, 1)]
+    return filter(row -> any([AG.contains(buffered_geoms[i], row.geometry) for i in eachindex(buffered_geoms)]), counties)
 end
 
 function intersecting_counties(shapefile_path::String)
