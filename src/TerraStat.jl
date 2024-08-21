@@ -21,7 +21,17 @@ function intersecting_counties(shapefile_path::String)
     return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), counties)
 end
 
-function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
+function get_counties(shapefile_path::String, pred::Symbol, buffer::Float64)
+    if pred == :intersects
+        return intersecting_counties(shapefile_path)
+    elseif pred == :contains
+        return contained_counties(shapefile_path, buffer)
+    else
+        return error("Invalid predicate: $pred")
+    end
+end
+
+function get_data(shapefile_path::String, series_ids::Vector{String}, api_key::String, pred::Symbol, buffer::Float64, area_idx::UnitRange{Int})
     if pred == :intersects
         counties = intersecting_counties(shapefile_path)
     elseif pred == :contains
@@ -30,7 +40,6 @@ function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred:
         error("Invalid predicate: $pred")
     end
 
-    series_ids = ["LAUCN$(row.GEOID)000000000$(measure)" for row in eachrow(counties)]
     url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
     headers = Dict("Content-Type" => "application/json")
     all_rows = []
@@ -68,72 +77,6 @@ function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred:
                             periodName = data_point["periodName"],
                             latest = data_point["latest"],
                             value = parse(Float64, data_point["value"]),
-                            footnotes = join([fn["text"] for fn in data_point["footnotes"]], ", ")
-                        ))
-                    end
-                end
-            catch e
-                error(e)
-            end
-        else
-            error("Error: ", HTTP.status(response), " - ", String(HTTP.body(response)))
-        end
-        current_call += 1
-    end
-
-    df = DataFrame(all_rows)
-	df.GEOID = [row.seriesID[6:10] for row in eachrow(df)]
-
-    return leftjoin(counties, df; on=:GEOID)
-end
-
-function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
-    if pred == :intersects
-        counties = intersecting_counties(shapefile_path)
-    elseif pred == :contains
-        counties = contained_counties(shapefile_path, buffer)
-    else
-        error("Invalid predicate: $pred")
-    end
-
-    series_ids = ["ENU$(row.GEOID)$(data_type)$(size)$(ownership)$(industry)" for row in eachrow(counties)]
-    url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
-    headers = Dict("Content-Type" => "application/json")
-    all_rows = []
-
-    # Split series_ids into chunks of 50 since BLS API has a limit of 50 series per call
-    chunks = Iterators.partition(series_ids, 50)
-    total_calls = length(chunks)
-    current_call = 1
-
-    for chunk in chunks
-        @info "Performing call $current_call of $total_calls to the BLS API..."
-        payload = JSON.json(
-            Dict(
-                "seriesid" => chunk,
-                "registrationkey" => api_key,
-                "latest" => "true"
-            )
-        )
-
-        response = HTTP.post(url, headers=headers, body=payload)
-
-        if HTTP.status(response) == 200
-            try
-                data = JSON.parse(String(HTTP.body(response)))
-                series_data = data["Results"]["series"]
-
-                # Extract data points and add to all_rows
-                for series in series_data
-                    series_id = series["seriesID"]
-                    for data_point in series["data"]
-                        push!(all_rows, (
-                            seriesID = series_id,
-                            year = data_point["year"],
-                            period = data_point["period"],
-                            periodName = data_point["periodName"],
-                            latest = data_point["latest"],
-                            value = tryparse(Float64, data_point["value"]),
                             footnotes = join([fn["text"] for fn in data_point["footnotes"] if haskey(fn, "text")], ", ")
                         ))
                     end
@@ -148,18 +91,30 @@ function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, siz
     end
 
     df = DataFrame(all_rows)
-	df.GEOID = [row.seriesID[4:8] for row in eachrow(df)]
+	df.GEOID = [row.seriesID[area_idx] for row in eachrow(df)]
     finaldf = leftjoin(counties, df; on=:GEOID)
 
-    if any(ismissing, finaldf.value)
+    if "value" in names(finaldf) && any(ismissing, finaldf.value)
         @warn "There are missing values in the data. This often happens when a particular series does not exist."
     end
 
-    if any(isnothing, finaldf.value)
+    if "value" in names(finaldf) && any(isnothing, finaldf.value)
         @warn "There are nothing values in the data. This usually happens when data are not disclosable."
     end
 
     return finaldf
+end
+
+function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
+    counties = get_counties(shapefile_path, pred, buffer)
+    series_ids = ["LAUCN$(row.GEOID)000000000$(measure)" for row in eachrow(counties)]
+    return get_data(shapefile_path, series_ids, api_key, pred, buffer, 6:10)
+end
+
+function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
+    counties = get_counties(shapefile_path, pred, buffer)
+    series_ids = ["ENU$(row.GEOID)$(data_type)$(size)$(ownership)$(industry)" for row in eachrow(counties)]
+    return get_data(shapefile_path, series_ids, api_key, pred, buffer, 4:8)
 end
 
 end

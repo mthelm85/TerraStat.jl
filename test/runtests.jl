@@ -10,14 +10,24 @@ test_geojson_path = TerraStat.project_path("data/research_triangle.geojson")
 end
 
 @testset "contained_counties function" begin
-    result = TerraStat.contained_counties(test_geojson_path)
+    result = TerraStat.contained_counties(test_geojson_path, 0.09)
     @test size(result, 1) == 0
     @test size(result, 2) == 10
 end
 
 @testset "laus function" begin
-    api_key = "78a884d3dd654550952b45740abcad30"
+    api_key = ENV["BLS_KEY"]
     result = TerraStat.laus(test_geojson_path, api_key)
+    @test size(result, 1) == 4
+    @test size(result, 2) == 17
+    result_contains = TerraStat.laus(test_geojson_path, api_key, pred=:contains)
+    @test size(result_contains, 1) == 0
+    @test size(result_contains, 2) == 10
+end
+
+@testset "qcew function" begin
+    api_key = ENV["BLS_KEY"]
+    result = TerraStat.qcew(test_geojson_path, api_key)
     @test size(result, 1) == 4
     @test size(result, 2) == 17
     result_contains = TerraStat.laus(test_geojson_path, api_key, pred=:contains)
