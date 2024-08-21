@@ -149,12 +149,15 @@ function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, siz
 
     df = DataFrame(all_rows)
 	df.GEOID = [row.seriesID[4:8] for row in eachrow(df)]
-    if missing in df.value
+
+    if any(ismissing, df.value)
         @warn "There are missing values in the data."
     end
-    if nothing in df.value
-        @warn "Some values were suppressed in the data."
+
+    if any(isnothing, df.value)
+        @warn "There are nothing values in the data."
     end
+
     return leftjoin(counties, df; on=:GEOID)
 end
 
