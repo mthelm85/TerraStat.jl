@@ -148,7 +148,7 @@ function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, siz
     end
 
     df = DataFrame(all_rows)
-	df.GEOID = [row.seriesID[6:10] for row in eachrow(df)]
+	df.GEOID = [row.seriesID[4:8] for row in eachrow(df)]
 
     return leftjoin(counties, df; on=:GEOID)
 end
