@@ -1,7 +1,7 @@
 name = "TerraStat"
 uuid = "028ea717-b86e-43f6-b7df-12f49c729ff2"
 authors = ["Matt Helm"]
-version = "1.8.0-DEV"
+version = "1.9.0-DEV"
 
 [deps]
 ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"

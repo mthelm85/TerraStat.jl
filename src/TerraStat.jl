@@ -87,7 +87,7 @@ function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred:
     return leftjoin(counties, df; on=:GEOID)
 end
 
-function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer, pred::Symbol=:intersects)
+function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects)
     if pred == :intersects
         counties = intersecting_counties(shapefile_path)
     elseif pred == :contains
@@ -133,7 +133,7 @@ function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, siz
                             period = data_point["period"],
                             periodName = data_point["periodName"],
                             latest = data_point["latest"],
-                            value = parse(Float64, data_point["value"]),
+                            value = tryparse(Float64, data_point["value"]),
                             footnotes = join([fn["text"] for fn in data_point["footnotes"]], ", ")
                         ))
                     end
