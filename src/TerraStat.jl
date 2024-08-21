@@ -134,7 +134,7 @@ function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, siz
                             periodName = data_point["periodName"],
                             latest = data_point["latest"],
                             value = tryparse(Float64, data_point["value"]),
-                            footnotes = join([fn["text"] for fn in data_point["footnotes"]], ", ")
+                            footnotes = join([fn["text"] for fn in data_point["footnotes"] if haskey(fn, "text")], ", ")
                         ))
                     end
                 end
@@ -152,11 +152,11 @@ function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, siz
     finaldf = leftjoin(counties, df; on=:GEOID)
 
     if any(ismissing, finaldf.value)
-        @warn "There are missing values in the data."
+        @warn "There are missing values in the data. This often happens when a particular series does not exist."
     end
 
     if any(isnothing, finaldf.value)
-        @warn "There are nothing values in the data."
+        @warn "There are nothing values in the data. This usually happens when data are not disclosable."
     end
 
     return finaldf
