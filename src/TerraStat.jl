@@ -8,10 +8,10 @@ using JSON
 
 project_path(parts...) = normpath(joinpath(@__DIR__, "..", parts...))
 
-function contained_counties(shapefile_path::String)
+function contained_counties(shapefile_path::String, buffer::Float64)
     counties = intersecting_counties(shapefile_path)
     user_shape = GDF.read(shapefile_path)
-    buffered_geoms = [AG.buffer(user_shape.geometry[i], 0.09) for i in 1:size(user_shape, 1)]
+    buffered_geoms = [AG.buffer(user_shape.geometry[i], buffer) for i in 1:size(user_shape, 1)]
     return filter(row -> any([AG.contains(buffered_geoms[i], row.geometry) for i in eachindex(buffered_geoms)]), counties)
 end
 
@@ -21,11 +21,11 @@ function intersecting_counties(shapefile_path::String)
     return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), counties)
 end
 
-function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects)
+function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
     if pred == :intersects
         counties = intersecting_counties(shapefile_path)
     elseif pred == :contains
-        counties = contained_counties(shapefile_path)
+        counties = contained_counties(shapefile_path, buffer)
     else
         error("Invalid predicate: $pred")
     end
