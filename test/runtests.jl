@@ -3,14 +3,14 @@ using Test
 
 test_geojson_path = TerraStat.project_path("data/research_triangle.geojson")
 
-@testset "intersecting_counties function" begin
-    result = TerraStat.intersecting_counties(test_geojson_path)
+@testset "intersecting_geometries function" begin
+    result = TerraStat.intersecting_geometries(test_geojson_path, "data/cb_2018_us_county_5m.shp")
     @test size(result, 1) == 4
     @test size(result, 2) == 10
 end
 
-@testset "contained_counties function" begin
-    result = TerraStat.contained_counties(test_geojson_path, 0.09)
+@testset "contained_geometries function" begin
+    result = TerraStat.contained_geometries(test_geojson_path, 0.09, "data/cb_2018_us_county_5m.shp")
     @test size(result, 1) == 0
     @test size(result, 2) == 10
 end

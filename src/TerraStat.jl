@@ -8,38 +8,30 @@ using JSON
 
 project_path(parts...) = normpath(joinpath(@__DIR__, "..", parts...))
 
-function contained_counties(shapefile_path::String, buffer::Float64)
-    counties = intersecting_counties(shapefile_path)
-    user_shape = GDF.read(shapefile_path)
+function contained_geometries(user_shapefile_path::String, buffer::Float64, shapefile_path::String)
+    geometries = intersecting_geometries(user_shapefile_path, shapefile_path)
+    user_shape = GDF.read(user_shapefile_path)
     buffered_geoms = [AG.buffer(user_shape.geometry[i], buffer) for i in 1:size(user_shape, 1)]
-    return filter(row -> any([AG.contains(buffered_geoms[i], row.geometry) for i in eachindex(buffered_geoms)]), counties)
+    return filter(row -> any([AG.contains(buffered_geoms[i], row.geometry) for i in eachindex(buffered_geoms)]), geometries)
 end
 
-function intersecting_counties(shapefile_path::String)
-    counties = GDF.read(project_path("data/cb_2018_us_county_5m.shp"))
-    user_shape = GDF.read(shapefile_path)
-    return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), counties)
+function intersecting_geometries(user_shapefile_path::String, shapefile_path::String)
+    geometries = GDF.read(project_path(shapefile_path))
+    user_shape = GDF.read(user_shapefile_path)
+    return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) for i in 1:size(user_shape,1)]), geometries)
 end
 
-function get_counties(shapefile_path::String, pred::Symbol, buffer::Float64)
+function get_geometries(user_shapefile_path::String, pred::Symbol, buffer::Float64, shapefile_path::String)
     if pred == :intersects
-        return intersecting_counties(shapefile_path)
+        return intersecting_geometries(user_shapefile_path, shapefile_path)
     elseif pred == :contains
-        return contained_counties(shapefile_path, buffer)
+        return contained_geometries(user_shapefile_path, buffer, shapefile_path)
     else
         return error("Invalid predicate: $pred")
     end
 end
 
-function get_data(shapefile_path::String, series_ids::Vector{String}, api_key::String, pred::Symbol, buffer::Float64, area_idx::UnitRange{Int})
-    if pred == :intersects
-        counties = intersecting_counties(shapefile_path)
-    elseif pred == :contains
-        counties = contained_counties(shapefile_path, buffer)
-    else
-        error("Invalid predicate: $pred")
-    end
-
+function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRange{Int}, geometries::DataFrame)
     url = "https://api.bls.gov/publicAPI/v2/timeseries/data"
     headers = Dict("Content-Type" => "application/json")
     all_rows = []
@@ -92,7 +84,7 @@ function get_data(shapefile_path::String, series_ids::Vector{String}, api_key::S
 
     df = DataFrame(all_rows)
 	df.GEOID = [row.seriesID[area_idx] for row in eachrow(df)]
-    finaldf = leftjoin(counties, df; on=:GEOID)
+    finaldf = leftjoin(geometries, df; on=:GEOID)
 
     if "value" in names(finaldf) && any(ismissing, finaldf.value)
         @warn "There are missing values in the data. This often happens when a particular series does not exist."
@@ -105,16 +97,22 @@ function get_data(shapefile_path::String, series_ids::Vector{String}, api_key::S
     return finaldf
 end
 
-function laus(shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
-    counties = get_counties(shapefile_path, pred, buffer)
-    series_ids = ["LAUCN$(row.GEOID)000000000$(measure)" for row in eachrow(counties)]
-    return get_data(shapefile_path, series_ids, api_key, pred, buffer, 6:10)
+function laus(user_shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
+    geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
+    series_ids = ["LAUCN$(row.GEOID)000000000$(measure)" for row in eachrow(geometries)]
+    return get_data(series_ids, api_key, 6:10, geometries)
 end
 
-function qcew(shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
-    counties = get_counties(shapefile_path, pred, buffer)
-    series_ids = ["ENU$(row.GEOID)$(data_type)$(size)$(ownership)$(industry)" for row in eachrow(counties)]
-    return get_data(shapefile_path, series_ids, api_key, pred, buffer, 4:8)
+function qcew(user_shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
+    geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
+    series_ids = ["ENU$(row.GEOID)$(data_type)$(size)$(ownership)$(industry)" for row in eachrow(geometries)]
+    return get_data(series_ids, api_key, 4:8, geometries)
+end
+
+function oews(user_shapefile_path::String, api_key::String; occupation::String="000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
+    geometries = get_geometries(user_shapefile_path, pred, buffer, "data/OES 2019 Shapefile.shp")
+    series_ids = ["OEUM$(lpad(row.GEOID, 7, "0"))000000$(occupation)$(data_type)" for row in eachrow(geometries)]
+    return get_data(series_ids, api_key, 5:11, geometries)
 end
 
 end
