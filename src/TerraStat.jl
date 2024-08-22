@@ -18,7 +18,7 @@ end
 function intersecting_geometries(user_shapefile_path::String, shapefile_path::String)
     geometries = GDF.read(project_path(shapefile_path))
     user_shape = GDF.read(user_shapefile_path)
-    return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) && AG.geomarea(AG.union(user_shape.geometry[i], row.geometry)) > 0.01 * AG.geomarea(row.geometry) for i in 1:size(user_shape, 1)]), geometries)
+    return filter(row -> any([AG.intersects(user_shape.geometry[i], row.geometry) && AG.geomarea(AG.intersection(user_shape.geometry[i], row.geometry)) > 0.01 * AG.geomarea(row.geometry) for i in 1:size(user_shape, 1)]), geometries)
 end
 
 # function intersecting_geometries(user_shapefile_path::String, shapefile_path::String)
