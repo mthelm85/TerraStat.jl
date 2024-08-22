@@ -68,7 +68,7 @@ function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRan
                             period = data_point["period"],
                             periodName = data_point["periodName"],
                             latest = data_point["latest"],
-                            value = parse(Float64, data_point["value"]),
+                            value = tryparse(Float64, data_point["value"]),
                             footnotes = join([fn["text"] for fn in data_point["footnotes"] if haskey(fn, "text")], ", ")
                         ))
                     end
