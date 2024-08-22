@@ -97,18 +97,76 @@ function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRan
     return finaldf
 end
 
+"""
+    laus(user_shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
+
+Fetches Local Area Unemployment Statistics (LAUS) data for geometries specified in a shapefile.
+
+# Arguments
+- `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
+- `api_key::String`: The API key for accessing the LAUS data.
+- `measure::Integer=3`: The measure code for the LAUS data. Default is 3.
+- `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
+- `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+
+# Returns
+- A DataFrame containing the LAUS data for the selected geometries.
+
+# Description
+This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_county_5m.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified measure. The function then fetches the LAUS data for these series IDs using the provided API key and returns the data as a DataFrame.
+"""
 function laus(user_shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
     series_ids = ["LAUCN$(row.GEOID)000000000$(measure)" for row in eachrow(geometries)]
     return get_data(series_ids, api_key, 6:10, geometries)
 end
 
+"""
+    qcew(user_shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
+
+Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries specified in a shapefile.
+
+# Arguments
+- `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
+- `api_key::String`: The API key for accessing the QCEW data.
+- `data_type::Integer=1`: The data type code for the QCEW data. Default is 1.
+- `size::Integer=0`: The size code for the QCEW data. Default is 0.
+- `ownership::Integer=5`: The ownership code for the QCEW data. Default is 5.
+- `industry::Integer=10`: The industry code for the QCEW data. Default is 10.
+- `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
+- `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+
+# Returns
+- A DataFrame containing the QCEW data for the selected geometries.
+
+# Description
+This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_county_5m.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified parameters (`data_type`, `size`, `ownership`, `industry`). The function then fetches the QCEW data for these series IDs using the provided API key and returns the data as a DataFrame.
+"""
 function qcew(user_shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
     series_ids = ["ENU$(row.GEOID)$(data_type)$(size)$(ownership)$(industry)" for row in eachrow(geometries)]
     return get_data(series_ids, api_key, 4:8, geometries)
 end
 
+"""
+    oews(user_shapefile_path::String, api_key::String; occupation::String="000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
+
+Fetches Occupational Employment and Wage Statistics (OEWS) data for geometries specified in a shapefile.
+
+# Arguments
+- `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
+- `api_key::String`: The API key for accessing the OEWS data.
+- `occupation::String="000000"`: The occupation code for the OEWS data. Default is "000000".
+- `data_type::String="01"`: The data type code for the OEWS data. Default is "01".
+- `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
+- `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+
+# Returns
+- A DataFrame containing the OEWS data for the selected geometries.
+
+# Description
+This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/OES 2019 Shapefile.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified parameters (`occupation`, `data_type`). The function then fetches the OEWS data for these series IDs using the provided API key and returns the data as a DataFrame.
+"""
 function oews(user_shapefile_path::String, api_key::String; occupation::String="000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/OES 2019 Shapefile.shp")
     series_ids = ["OEUM$(lpad(row.GEOID, 7, "0"))000000$(occupation)$(data_type)" for row in eachrow(geometries)]
