@@ -105,7 +105,7 @@ Fetches Local Area Unemployment Statistics (LAUS) data for geometries specified 
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the LAUS data.
-- `measure::Integer=3`: The measure code for the LAUS data. Default is 3.
+- `measure::Integer=3`: The measure code for the LAUS data. Default is 3. https://download.bls.gov/pub/time.series/la/la.measure
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 
@@ -129,10 +129,10 @@ Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries spec
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the QCEW data.
-- `data_type::Integer=1`: The data type code for the QCEW data. Default is 1.
-- `size::Integer=0`: The size code for the QCEW data. Default is 0.
-- `ownership::Integer=5`: The ownership code for the QCEW data. Default is 5.
-- `industry::Integer=10`: The industry code for the QCEW data. Default is 10.
+- `data_type::Integer=1`: The data type code for the QCEW data. Default is 1. https://www.bls.gov/cew/classifications/datatype/datatype-titles.htm
+- `size::Integer=0`: The size code for the QCEW data. Default is 0. https://www.bls.gov/cew/classifications/size/size-titles.htm
+- `ownership::Integer=5`: The ownership code for the QCEW data. Default is 5. https://www.bls.gov/cew/classifications/ownerships/ownership-titles.htm
+- `industry::Integer=10`: The industry code for the QCEW data. Default is 10. https://www.bls.gov/cew/classifications/industry/industry-titles.htm
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 
@@ -156,8 +156,8 @@ Fetches Occupational Employment and Wage Statistics (OEWS) data for geometries s
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the OEWS data.
-- `occupation::String="000000"`: The occupation code for the OEWS data. Default is "000000".
-- `data_type::String="01"`: The data type code for the OEWS data. Default is "01".
+- `occupation::String="000000"`: The occupation code for the OEWS data. Default is "000000". https://download.bls.gov/pub/time.series/oe/
+- `data_type::String="01"`: The data type code for the OEWS data. Default is "01". https://download.bls.gov/pub/time.series/oe/
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 
