@@ -173,4 +173,30 @@ function oews(user_shapefile_path::String, api_key::String; occupation::String="
     return get_data(series_ids, api_key, 5:11, geometries)
 end
 
+"""
+    ces(user_shapefile_path::String, api_key::String; supersector::String="00", industry::String="00000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
+
+Fetches Current Employment Statistics (CES) data for geometries specified in a shapefile.
+
+# Arguments
+- `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
+- `api_key::String`: The API key for accessing the CES data.
+- `supersector::String="00"`: The supersector code for the CES data. Default is "00". https://download.bls.gov/pub/time.series/sm/sm.supersector
+- `industry::String="00000000"`: The industry code for the CES data. Default is "00000000". https://download.bls.gov/pub/time.series/sm/sm.industry
+- `data_type::String="01"`: The data type code for the CES data. Default is "01". https://download.bls.gov/pub/time.series/sm/sm.data_type
+- `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
+- `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+
+# Returns
+- A DataFrame containing the CES data for the selected geometries.
+
+# Description
+This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_cbsa_5m.shp`). It constructs series IDs for the selected geometries based on their `STATEFP`, `GEOID`, and the specified parameters (`supersector`, `industry`, `data_type`). The function then fetches the CES data for these series IDs using the provided API key and returns the data as a DataFrame.
+"""
+function ces(user_shapefile_path::String, api_key::String; supersector::String="00", industry::String="00000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
+    geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_cbsa_5m.shp")
+    series_ids = ["SMU$(row.STATEFP)$(row.GEOID)$(supersector)$(industry)$(data_type)" for row in eachrow(geometries)]
+    return get_data(series_ids, api_key, 6:10, geometries)
+end
+
 end
