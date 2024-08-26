@@ -84,6 +84,11 @@ function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRan
 
     df = DataFrame(all_rows)
 	df.GEOID = [row.seriesID[area_idx] for row in eachrow(df)]
+
+    if nrow(df) == 0
+        @warn "No data found for the selected geometries."
+    end
+
     finaldf = leftjoin(geometries, df; on=:GEOID)
 
     if "value" in names(finaldf) && any(ismissing, finaldf.value)
