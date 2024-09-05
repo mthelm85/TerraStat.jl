@@ -1,7 +1,7 @@
 name = "TerraStat"
 uuid = "028ea717-b86e-43f6-b7df-12f49c729ff2"
 authors = ["Matt Helm"]
-version = "1.30.0-DEV"
+version = "1.31.0-DEV"
 
 [deps]
 ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
@@ -12,7 +12,7 @@ JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 ProfileView = "c46f51b8-102a-5cf2-8d2c-8597cb0e0da7"
 
 [compat]
-julia = "1.6.7"
+julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
