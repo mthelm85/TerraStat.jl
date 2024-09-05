@@ -1,5 +1,7 @@
 module TerraStat
 
+export ces, laus, oews, qcew 
+
 import ArchGDAL as AG
 using DataFrames
 import GeoDataFrames as GDF
@@ -113,6 +115,7 @@ Fetches Local Area Unemployment Statistics (LAUS) data for geometries specified 
 - `measure::Integer=3`: The measure code for the LAUS data. Default is 3. https://download.bls.gov/pub/time.series/la/la.measure
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+- `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
 
 # Returns
 - A DataFrame containing the LAUS data for the selected geometries.
@@ -140,6 +143,7 @@ Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries spec
 - `industry::Integer=10`: The industry code for the QCEW data. Default is 10. https://www.bls.gov/cew/classifications/industry/industry-titles.htm
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+- `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
 
 # Returns
 - A DataFrame containing the QCEW data for the selected geometries.
@@ -165,6 +169,7 @@ Fetches Occupational Employment and Wage Statistics (OEWS) data for geometries s
 - `data_type::String="01"`: The data type code for the OEWS data. Default is "01". https://download.bls.gov/pub/time.series/oe/
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+- `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
 
 # Returns
 - A DataFrame containing the OEWS data for the selected geometries.
@@ -190,6 +195,7 @@ Fetches Current Employment Statistics (CES) data for geometries specified in a s
 - `data_type::String="01"`: The data type code for the CES data. Default is "01". https://download.bls.gov/pub/time.series/sm/sm.data_type
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
+- `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
 
 # Returns
 - A DataFrame containing the CES data for the selected geometries.
