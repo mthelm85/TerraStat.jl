@@ -1,6 +1,6 @@
 module TerraStat
 
-export ces, laus, oews, qcew 
+export ces, laus, oews, qcew
 
 import ArchGDAL as AG
 using DataFrames
@@ -13,7 +13,7 @@ project_path(parts...) = normpath(joinpath(@__DIR__, "..", parts...))
 function contained_geometries(user_shapefile_path::String, buffer::Float64, shapefile_path::String)
     geometries = intersecting_geometries(user_shapefile_path, shapefile_path)
     user_shape = GDF.read(user_shapefile_path)
-    buffered_geoms = [AG.buffer(user_shape.geometry[i], buffer) for i in 1:size(user_shape, 1)]
+    buffered_geoms = [AG.buffer(user_shape.geometry[i], buffer) for i in 1:size(user_shape,1)]
     return filter(row -> any([AG.contains(buffered_geoms[i], row.geometry) for i in eachindex(buffered_geoms)]), geometries)
 end
 
@@ -65,13 +65,13 @@ function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRan
                     series_id = series["seriesID"]
                     for data_point in series["data"]
                         push!(all_rows, (
-                            seriesID = series_id,
-                            year = data_point["year"],
-                            period = data_point["period"],
-                            periodName = data_point["periodName"],
-                            latest = haskey(data_point, "latest") ? tryparse(Bool, data_point["latest"]) : false,
-                            value = tryparse(Float64, data_point["value"]),
-                            footnotes = join([fn["text"] for fn in data_point["footnotes"] if haskey(fn, "text")], ", ")
+                            seriesID=series_id,
+                            year=data_point["year"],
+                            period=data_point["period"],
+                            periodName=data_point["periodName"],
+                            latest=haskey(data_point, "latest") ? tryparse(Bool, data_point["latest"]) : false,
+                            value=tryparse(Float64, data_point["value"]),
+                            footnotes=join([fn["text"] for fn in data_point["footnotes"] if haskey(fn, "text")], ", ")
                         ))
                     end
                 end
@@ -85,7 +85,7 @@ function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRan
     end
 
     df = DataFrame(all_rows)
-	df.GEOID = [row.seriesID[area_idx] for row in eachrow(df)]
+    df.GEOID = [row.seriesID[area_idx] for row in eachrow(df)]
 
     if nrow(df) == 0
         @warn "No data found for the selected geometries."
@@ -105,14 +105,14 @@ function get_data(series_ids::Vector{String}, api_key::String, area_idx::UnitRan
 end
 
 """
-    laus(user_shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09)
+    laus(user_shapefile_path::String, api_key::String; measure::AbstractVector{Int}=[3], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
 
 Fetches Local Area Unemployment Statistics (LAUS) data for geometries specified in a shapefile.
 
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the LAUS data.
-- `measure::Integer=3`: The measure code for the LAUS data. Default is 3. https://download.bls.gov/pub/time.series/la/la.measure
+- `measure::AbstractVector{Int}=[3]`: The measure code(s) for the LAUS data. Default is 3. https://download.bls.gov/pub/time.series/la/la.measure
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 - `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
@@ -123,24 +123,24 @@ Fetches Local Area Unemployment Statistics (LAUS) data for geometries specified 
 # Description
 This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_county_5m.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified measure. The function then fetches the LAUS data for these series IDs using the provided API key and returns the data as a DataFrame.
 """
-function laus(user_shapefile_path::String, api_key::String; measure::Integer=3, pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
+function laus(user_shapefile_path::String, api_key::String; measure::AbstractVector{Int}=[3], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
-    series_ids = ["LAUCN$(row.GEOID)000000000$(measure)" for row in eachrow(geometries)]
+    series_ids = String["LAUCN$(row.GEOID)000000000$(m)" for row in eachrow(geometries) for m in measure]
     return get_data(series_ids, api_key, 6:10, geometries, latest)
 end
 
 """
-    qcew(user_shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09)
+    qcew(user_shapefile_path::String, api_key::String; data_type::AbstractVector{Int}=[1], size::AbstractVector{Int}=[0], ownership::AbstractVector{Int}=[5], industry::AbstractVector{Int}=[10], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
 
 Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries specified in a shapefile.
 
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the QCEW data.
-- `data_type::Integer=1`: The data type code for the QCEW data. Default is 1. https://www.bls.gov/cew/classifications/datatype/datatype-titles.htm
-- `size::Integer=0`: The size code for the QCEW data. Default is 0. https://www.bls.gov/cew/classifications/size/size-titles.htm
-- `ownership::Integer=5`: The ownership code for the QCEW data. Default is 5. https://www.bls.gov/cew/classifications/ownerships/ownership-titles.htm
-- `industry::Integer=10`: The industry code for the QCEW data. Default is 10. https://www.bls.gov/cew/classifications/industry/industry-titles.htm
+- `data_type::AbstractVector{Int}=[1]`: The data type code(s) for the QCEW data. Default is 1. https://www.bls.gov/cew/classifications/datatype/datatype-titles.htm
+- `size::AbstractVector{Int}=[0]`: The size code(s) for the QCEW data. Default is 0. https://www.bls.gov/cew/classifications/size/size-titles.htm
+- `ownership::AbstractVector{Int}=[5]`: The ownership code(s) for the QCEW data. Default is 5. https://www.bls.gov/cew/classifications/ownerships/ownership-titles.htm
+- `industry::AbstractVector{Int}=[10]`: The industry code(s) for the QCEW data. Default is 10. https://www.bls.gov/cew/classifications/industry/industry-titles.htm
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 - `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
@@ -151,22 +151,22 @@ Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries spec
 # Description
 This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_county_5m.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified parameters (`data_type`, `size`, `ownership`, `industry`). The function then fetches the QCEW data for these series IDs using the provided API key and returns the data as a DataFrame.
 """
-function qcew(user_shapefile_path::String, api_key::String; data_type::Integer=1, size::Integer=0, ownership::Integer=5, industry::Integer=10, pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
+function qcew(user_shapefile_path::String, api_key::String; data_type::AbstractVector{Int}=[1], size::AbstractVector{Int}=[0], ownership::AbstractVector{Int}=[5], industry::AbstractVector{Int}=[10], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
-    series_ids = ["ENU$(row.GEOID)$(data_type)$(size)$(ownership)$(industry)" for row in eachrow(geometries)]
+    series_ids = String["ENU$(row.GEOID)$(d)$(s)$(o)$(i)" for row in eachrow(geometries) for d in data_type for s in size for o in ownership for i in industry]
     return get_data(series_ids, api_key, 4:8, geometries, latest)
 end
 
 """
-    oews(user_shapefile_path::String, api_key::String; occupation::String="000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
+    oews(user_shapefile_path::String, api_key::String; occupation::AbstractVector{String}=["000000"], data_type::AbstractVector{String}=["01"], pred::Symbol=:intersects, buffer::Float64=0.09, latest=true)
 
 Fetches Occupational Employment and Wage Statistics (OEWS) data for geometries specified in a shapefile.
 
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the OEWS data.
-- `occupation::String="000000"`: The occupation code for the OEWS data. Default is "000000". https://download.bls.gov/pub/time.series/oe/
-- `data_type::String="01"`: The data type code for the OEWS data. Default is "01". https://download.bls.gov/pub/time.series/oe/
+- `occupation::AbstractVector{String}=["000000"]`: The occupation code(s) for the OEWS data. Default is "000000". https://download.bls.gov/pub/time.series/oe/
+- `data_type::AbstractVector{String}=["01"]`: The data type code(s) for the OEWS data. Default is "01". https://download.bls.gov/pub/time.series/oe/
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 - `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
@@ -177,22 +177,22 @@ Fetches Occupational Employment and Wage Statistics (OEWS) data for geometries s
 # Description
 This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/OES 2019 Shapefile.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified parameters (`occupation`, `data_type`). The function then fetches the OEWS data for these series IDs using the provided API key and returns the data as a DataFrame.
 """
-function oews(user_shapefile_path::String, api_key::String; occupation::String="000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
+function oews(user_shapefile_path::String, api_key::String; occupation::AbstractVector{String}=["000000"], data_type::AbstractVector{String}=["01"], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/OES 2019 Shapefile.shp")
-    series_ids = ["OEUM$(lpad(row.GEOID, 7, "0"))000000$(occupation)$(data_type)" for row in eachrow(geometries)]
+    series_ids = String["OEUM$(lpad(row.GEOID, 7, "0"))000000$(o)$(d)" for row in eachrow(geometries) for o in occupation for d in data_type]
     return get_data(series_ids, api_key, 5:11, geometries, latest)
 end
 
 """
-    ces(user_shapefile_path::String, api_key::String; industry::String="00000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09)
+    ces(user_shapefile_path::String, api_key::String; industry::AbstractVector{String}=["00000000"], data_type::AbstractVector{String}=["01"], pred::Symbol=:intersects, buffer::Float64=0.09)
 
 Fetches Current Employment Statistics (CES) data for geometries specified in a shapefile.
 
 # Arguments
 - `user_shapefile_path::String`: The file path to the user's shapefile containing the geometries of interest.
 - `api_key::String`: The API key for accessing the CES data.
-- `industry::String="00000000"`: The industry code for the CES data. Default is "00000000". https://download.bls.gov/pub/time.series/sm/sm.industry
-- `data_type::String="01"`: The data type code for the CES data. Default is "01". https://download.bls.gov/pub/time.series/sm/sm.data_type
+- `industry::AbstractVector{String}=["00000000"]`: The industry code for the CES data. Default is "00000000". https://download.bls.gov/pub/time.series/sm/sm.industry
+- `data_type::AbstractVector{String}=["01"]`: The data type code for the CES data. Default is "01". https://download.bls.gov/pub/time.series/sm/sm.data_type
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 - `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
@@ -203,9 +203,9 @@ Fetches Current Employment Statistics (CES) data for geometries specified in a s
 # Description
 This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_cbsa_5m.shp`). It constructs series IDs for the selected geometries based on their `STATEFP`, `GEOID`, and the specified parameters (`industry`, `data_type`). The function then fetches the CES data for these series IDs using the provided API key and returns the data as a DataFrame.
 """
-function ces(user_shapefile_path::String, api_key::String; industry::String="00000000", data_type::String="01", pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
+function ces(user_shapefile_path::String, api_key::String; industry::AbstractVector{String}=["00000000"], data_type::AbstractVector{String}=["01"], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_cbsa_5m.shp")
-    series_ids = ["SMU$(row.STATEFP)$(row.GEOID)$(industry)$(data_type)" for row in eachrow(geometries)]
+    series_ids = String["SMU$(row.STATEFP)$(row.GEOID)$(i)$(d)" for row in eachrow(geometries) for i in industry for d in data_type]
     return get_data(series_ids, api_key, 6:10, geometries, latest)
 end
 
