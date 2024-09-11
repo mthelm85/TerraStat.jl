@@ -151,7 +151,7 @@ Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries spec
 # Description
 This function reads geometries from the user's shapefile and selects intersecting geometries from a predefined shapefile (`data/cb_2018_us_county_5m.shp`). It constructs series IDs for the selected geometries based on their GEOID and the specified parameters (`data_type`, `size`, `ownership`, `industry`). The function then fetches the QCEW data for these series IDs using the provided API key and returns the data as a DataFrame.
 """
-function qcew(user_shapefile_path::String, api_key::String; data_type::AbstractVector{Int}=[1], size::AbstractVector{Int}=[0], ownership::AbstractVector{Int}=[5], industry::AbstractVector{Int}=[10], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
+function qcew(user_shapefile_path::String, api_key::String; data_type::AbstractVector{Int}=[1], size::AbstractVector{Int}=[0], ownership::AbstractVector{Int}=[5], industry::AbstractVector=[10], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
     geometries = get_geometries(user_shapefile_path, pred, buffer, "data/cb_2018_us_county_5m.shp")
     series_ids = String["ENU$(row.GEOID)$(d)$(s)$(o)$(i)" for row in eachrow(geometries) for d in data_type for s in size for o in ownership for i in industry]
     return get_data(series_ids, api_key, 4:8, geometries, latest)
