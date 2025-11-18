@@ -130,7 +130,7 @@ function laus(user_shapefile_path::String, api_key::String; measure::AbstractVec
 end
 
 """
-    qcew(user_shapefile_path::String, api_key::String; data_type::AbstractVector{Int}=[1], size::AbstractVector{Int}=[0], ownership::AbstractVector{Int}=[5], industry::AbstractVector{Int}=[10], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
+    qcew(user_shapefile_path::String, api_key::String; data_type::AbstractVector{Int}=[1], size::AbstractVector{Int}=[0], ownership::AbstractVector{Int}=[5], industry::AbstractVector=[10], pred::Symbol=:intersects, buffer::Float64=0.09, latest::Bool=true)
 
 Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries specified in a shapefile.
 
@@ -140,7 +140,7 @@ Fetches Quarterly Census of Employment and Wages (QCEW) data for geometries spec
 - `data_type::AbstractVector{Int}=[1]`: The data type code(s) for the QCEW data. Default is 1. https://www.bls.gov/cew/classifications/datatype/datatype-titles.htm
 - `size::AbstractVector{Int}=[0]`: The size code(s) for the QCEW data. Default is 0. https://www.bls.gov/cew/classifications/size/size-titles.htm
 - `ownership::AbstractVector{Int}=[5]`: The ownership code(s) for the QCEW data. Default is 5. https://www.bls.gov/cew/classifications/ownerships/ownership-titles.htm
-- `industry::AbstractVector{Int}=[10]`: The industry code(s) for the QCEW data. Default is 10. https://www.bls.gov/cew/classifications/industry/industry-titles.htm
+- `industry::AbstractVector=[10]`: The industry code(s) for the QCEW data. Default is 10. https://www.bls.gov/cew/classifications/industry/industry-titles.htm
 - `pred::Symbol=:intersects`: The spatial predicate to use for selecting geometries. Default is `:intersects`.
 - `buffer::Float64=0.09`: The buffer distance to use for spatial operations. Default is 0.09.
 - `latest::Bool=true`: Whether to retrieve only the latest time period, or the whole time series. Default is `true`.
