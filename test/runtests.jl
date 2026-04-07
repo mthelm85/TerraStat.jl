@@ -15,42 +15,54 @@ end
     @test size(result, 2) == 11
 end
 
-@testset "laus function" begin
-    api_key = ENV["BLS_KEY"]
-    result = laus(test_geojson_path, api_key)
-    @test size(result, 1) == 4
-    @test size(result, 2) == 18
-    result_contains = laus(test_geojson_path, api_key, pred=:contains)
-    @test size(result_contains, 1) == 0
-    @test size(result_contains, 2) == 11
+@testset "validate_inputs function" begin
+    @test_throws ArgumentError TerraStat.validate_inputs("nonexistent.geojson", "key", :intersects, 0.09)
+    @test_throws ArgumentError TerraStat.validate_inputs(test_geojson_path, "", :intersects, 0.09)
+    @test_throws ArgumentError TerraStat.validate_inputs(test_geojson_path, "   ", :intersects, 0.09)
+    @test_throws ArgumentError TerraStat.validate_inputs(test_geojson_path, "key", :overlaps, 0.09)
+    @test_throws ArgumentError TerraStat.validate_inputs(test_geojson_path, "key", :intersects, -0.1)
+    @test_nowarn TerraStat.validate_inputs(test_geojson_path, "key", :intersects, 0.0)
+    @test_nowarn TerraStat.validate_inputs(test_geojson_path, "key", :contains, 0.09)
 end
 
-@testset "qcew function" begin
+if haskey(ENV, "BLS_KEY")
     api_key = ENV["BLS_KEY"]
-    result = qcew(test_geojson_path, api_key)
-    @test size(result, 1) == 4
-    @test size(result, 2) == 18
-    result_contains = qcew(test_geojson_path, api_key, pred=:contains)
-    @test size(result_contains, 1) == 0
-    @test size(result_contains, 2) == 11
-end
 
-@testset "oews function" begin
-    api_key = ENV["BLS_KEY"]
-    result = oews(test_geojson_path, api_key)
-    @test size(result, 1) == 2
-    @test size(result, 2) == 11
-    result_contains = oews(test_geojson_path, api_key, pred=:contains)
-    @test size(result_contains, 1) == 0
-    @test size(result_contains, 2) == 4
-end
+    @testset "laus function" begin
+        result = laus(test_geojson_path, api_key)
+        @test size(result, 1) == 4
+        @test size(result, 2) == 18
+        result_contains = laus(test_geojson_path, api_key, pred=:contains)
+        @test size(result_contains, 1) == 0
+        @test size(result_contains, 2) == 11
+    end
 
-@testset "ces function" begin
-    api_key = ENV["BLS_KEY"]
-    result = ces(test_geojson_path, api_key)
-    @test size(result, 1) == 2
-    @test size(result, 2) == 11
-    result_contains = ces(test_geojson_path, api_key, pred=:contains)
-    @test size(result_contains, 1) == 0
-    @test size(result_contains, 2) == 4
+    @testset "qcew function" begin
+        result = qcew(test_geojson_path, api_key)
+        @test size(result, 1) == 4
+        @test size(result, 2) == 18
+        result_contains = qcew(test_geojson_path, api_key, pred=:contains)
+        @test size(result_contains, 1) == 0
+        @test size(result_contains, 2) == 11
+    end
+
+    @testset "oews function" begin
+        result = oews(test_geojson_path, api_key)
+        @test size(result, 1) == 2
+        @test size(result, 2) == 11
+        result_contains = oews(test_geojson_path, api_key, pred=:contains)
+        @test size(result_contains, 1) == 0
+        @test size(result_contains, 2) == 4
+    end
+
+    @testset "ces function" begin
+        result = ces(test_geojson_path, api_key)
+        @test size(result, 1) == 2
+        @test size(result, 2) == 11
+        result_contains = ces(test_geojson_path, api_key, pred=:contains)
+        @test size(result_contains, 1) == 0
+        @test size(result_contains, 2) == 4
+    end
+else
+    @info "BLS_KEY not set — skipping live API tests"
 end

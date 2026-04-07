@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:juliaearth.github.io)",
+      "WebFetch(domain:juliageometry.github.io)"
+    ]
+  }
+}
